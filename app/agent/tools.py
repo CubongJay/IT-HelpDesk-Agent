@@ -49,7 +49,7 @@ def get_security_logs(email: str) -> str:
         if not logs:
             return f"No logs were found for the employee - '{clean_email}'"
 
-        return _format_security_logs(logs)
+        return _format_security_logs(clean_email, logs)
 
 
 VALID_LICENSES = {"Figma", "JetBrains", "Salesforce", "Slack", "GitHub", "Jira"}
