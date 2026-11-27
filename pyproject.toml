@@ -12,6 +12,9 @@ dependencies = [
     "sqlalchemy>=2.1.9",
     "langgraph-checkpoint-postgres>=3.2.1",
     "grandalf>=0.8",
+    "uvicorn>=0.54.0",
+    "dotenv>=0.9.9",
+    "langchain-openai>=1.8.5",
 ]
 
 

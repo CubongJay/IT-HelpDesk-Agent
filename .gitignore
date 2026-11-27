@@ -10,3 +10,4 @@ wheels/
 .venv
 .codemie
 .DS_STORE
+.env
