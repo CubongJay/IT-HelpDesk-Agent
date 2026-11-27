@@ -13,6 +13,9 @@ import os
 from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg import Connection
 from psycopg.rows import dict_row
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def agent_node(state: AgentState) -> dict:

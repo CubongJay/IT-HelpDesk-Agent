@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage, ToolMessage
 from sqlalchemy.orm import Session
 
 from app.agent.graph import it_agent_graph
+from app.agent.guardrails import check_input_guardrails, check_tool_call_guardrails
 from app.db.database import get_db, init_db
 from app.db.models import AuditLog, Ticket
 from app.schemas import ApprovalRequest, ChatRequest, ChatResponse
@@ -26,6 +27,13 @@ def health_check() -> dict:
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
+    is_safe, block_reson = check_input_guardrails(req.message)
+    if not is_safe:
+        return ChatResponse(
+            thread_id=req.thread_id,
+            status="blocked",
+            reply=block_reson or "Request blocked by security guardrails",
+        )
     ticket = db.query(Ticket).filter(Ticket.thread_id == req.thread_id).first()
     if not ticket:
         ticket = Ticket(
@@ -51,6 +59,15 @@ def chat(req: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
             {"id": tc["id"], "name": tc["name"], "args": tc["args"]}
             for tc in getattr(last_message, "tool_calls", [])
         ]
+        is_valid, tool_block_reason = check_tool_call_guardrails(pending_calls)
+        if not is_valid:
+            ticket.status = "blocked"
+            db.commit()
+            return ChatResponse(
+                thread_id=req.thread_id,
+                status="blocked",
+                reply=tool_block_reason or "Action blocked by tool guardrails.",
+            )
         ticket.status = "pending_approval"
         ticket.pending_action = {"tool_calls": pending_calls}
         db.commit()
